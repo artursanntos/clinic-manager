@@ -19,7 +19,7 @@ geração de receitas (ver ADR 0006: só a *entrega* de receitas assinadas pela 
 - Python 3.12, gerenciado com `uv`
 - FastAPI (webhook e endpoints de jobs)
 - **PydanticAI como wrapper de LLM, agnóstico de fornecedor.** O modelo vem de `AGENT_MODEL` no formato
-  `provedor:modelo` (`openrouter:…`, `anthropic:…`, `google-gla:…`, `openai:…`), com `AGENT_FALLBACK_MODELS`
+  `provedor:modelo` (`openrouter:…`, `anthropic:…`, `google:…`, `openai:…`), com `AGENT_FALLBACK_MODELS`
   opcional. Nenhum código fora de `app/agent/model.py` sabe qual é o fornecedor. Ver ADR 0007.
 - Agenda plugável via `CALENDAR_PROVIDER`: Google Calendar (service account), Microsoft 365/Outlook (Graph),
   CalDAV (iCloud, Nextcloud…) e `fake`.

@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import datetime
 from typing import Any
 from zoneinfo import ZoneInfo
+
+from pydantic_ai.messages import ModelMessage, ModelRequest, ModelResponse, ToolCallPart, ToolReturnPart
+from pydantic_ai.models.function import AgentInfo, FunctionModel
 
 from app.domain.models import BusyInterval
 from app.domain.rules import ClinicRules
@@ -96,3 +100,70 @@ def rules_dict(**overrides: Any) -> dict[str, Any]:
 
 def make_rules(**overrides: Any) -> ClinicRules:
     return ClinicRules.model_validate(rules_dict(**overrides))
+
+
+# --------------------------------------------------------------------------- scripted FunctionModel for tests
+
+
+Step = str | list[tuple[str, dict[str, Any]]] | Callable[[list[ModelMessage], AgentInfo], ModelResponse]
+
+
+def last_tool_text(messages: list[ModelMessage]) -> str:
+    """Content of the most recent tool return (skipping retry prompts)."""
+    for message in reversed(messages):
+        if isinstance(message, ModelRequest):
+            returns = [p for p in message.parts if isinstance(p, ToolReturnPart)]
+            if returns:
+                return str(returns[-1].content)
+    return ""
+
+
+def final(
+    message: str, intent: str = "conversa", **extra: Any
+) -> Callable[[list[ModelMessage], AgentInfo], ModelResponse]:
+    def step(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        return ModelResponse(
+            parts=[ToolCallPart(info.output_tools[0].name, {"message": message, "intent": intent, **extra})]
+        )
+
+    return step
+
+
+def echo_summary(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    """Final reply that repeats the «summary» from the last tool return."""
+    text = last_tool_text(messages)
+    summary = text.split("«", 1)[1].split("»", 1)[0] if "«" in text else text
+    return final(f"Confirma? {summary}", "proposta")(messages, info)
+
+
+def echo_after(marker: str) -> Callable[[list[ModelMessage], AgentInfo], ModelResponse]:
+    def step(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        text = last_tool_text(messages)
+        return final(text.split(marker, 1)[-1].strip(), "confirmado")(messages, info)
+
+    return step
+
+
+class ScriptModel:
+    """FunctionModel driven by a queue of steps (one per model request)."""
+
+    def __init__(self, *steps: Step) -> None:
+        self.steps: list[Step] = list(steps)
+        self.calls = 0
+        self.seen: list[list[ModelMessage]] = []
+        self.model = FunctionModel(self._fn, model_name="script")
+
+    def add(self, *steps: Step) -> None:
+        self.steps.extend(steps)
+
+    def _fn(self, messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        self.calls += 1
+        self.seen.append(messages)
+        if not self.steps:
+            raise AssertionError("ScriptModel ran out of steps")
+        step = self.steps.pop(0)
+        if isinstance(step, str):
+            return final(step)(messages, info)
+        if callable(step):
+            return step(messages, info)
+        return ModelResponse(parts=[ToolCallPart(name, args) for name, args in step])

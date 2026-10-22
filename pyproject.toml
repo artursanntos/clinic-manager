@@ -50,7 +50,7 @@ default-groups = ["dev"]
 [tool.ruff]
 line-length = 120
 target-version = "py312"
-src = ["app", "tests"]
+src = ["app", "tests", "evals"]
 
 [tool.ruff.lint]
 select = [
@@ -71,7 +71,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["app", "tests"]
+known-first-party = ["app", "tests", "evals"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["DTZ001"]  # tests build aware datetimes via helpers; allow explicit tzinfo= literals
@@ -82,7 +82,7 @@ python_version = "3.12"
 strict = true
 warn_unreachable = true
 plugins = ["pydantic.mypy"]
-files = ["app"]
+files = ["app", "evals"]
 
 [[tool.mypy.overrides]]
 module = ["caldav.*", "icalendar.*", "google.*"]

@@ -10,8 +10,8 @@ produção, o modelo será escolhido por custo × taxa de acerto nos evals.
 ## Decisão
 - PydanticAI é o único wrapper. Só `app/agent/model.py` resolve o modelo.
 - `AGENT_MODEL` usa o formato do PydanticAI `provedor:modelo` (ex.: `openrouter:<modelo>`,
-  `anthropic:<modelo>`, `google-gla:<modelo>`, `openai:<modelo>`). As chaves usam as variáveis padrão de cada
-  provedor (`OPENROUTER_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY`).
+  `anthropic:<modelo>`, `google:<modelo>`, `openai:<modelo>`). As chaves usam as variáveis padrão de cada
+  provedor (`OPENROUTER_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`, `OPENAI_API_KEY`).
 - `AGENT_FALLBACK_MODELS` (lista separada por vírgula) monta um `FallbackModel` — útil para modelos gratuitos, que
   falham ou batem limite com frequência.
 - `AGENT_OUTPUT_MODE` (`tool|native|prompted`) troca a estratégia de saída estruturada para modelos com suporte
