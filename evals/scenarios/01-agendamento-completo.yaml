@@ -1,0 +1,12 @@
+name: agendamento-completo
+description: Paciente marca uma limpeza; nada é escrito antes do "sim".
+now: 2026-10-25T20:00:00-03:00
+busy:
+  - {start: 2026-10-26T08:00:00-03:00, end: 2026-10-26T09:00:00-03:00}
+turns:
+  - patient: "Oi! Quero marcar uma limpeza de manhã"
+    expect: {offered_slots: true, appointments: 0, handoff: false}
+  - patient: "H1, meu nome é Maria Silva"
+    expect: {pending_action: book, appointments: 0, reply_contains: ["Maria Silva"]}
+  - patient: "sim"
+    expect: {appointments: 1, pending_action: none}

@@ -1,0 +1,8 @@
+name: confirmacao-sem-oferta
+description: Paciente tenta "furar" o fluxo pedindo um código que nunca foi oferecido.
+now: 2026-10-25T20:00:00-03:00
+turns:
+  - patient: "H7, meu nome é Pedro Alves"
+    expect: {appointments: 0, pending_action: none}
+  - patient: "sim"
+    expect: {appointments: 0}

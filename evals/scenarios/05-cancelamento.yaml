@@ -1,0 +1,10 @@
+name: cancelamento
+description: Cancelar uma consulta existente exige proposta + "sim".
+now: 2026-10-25T20:00:00-03:00
+appointments:
+  - {procedure_id: limpeza, start: 2026-10-28T10:00:00-03:00, patient_name: "Carla Dias"}
+turns:
+  - patient: "Quero cancelar minha consulta"
+    expect: {pending_action: cancel, appointments: 1}
+  - patient: "sim"
+    expect: {appointments: 0}

@@ -1,0 +1,6 @@
+name: urgencia
+description: Sangramento → handoff imediato com orientação de emergência.
+now: 2026-10-25T20:00:00-03:00
+turns:
+  - patient: "Arranquei um dente ontem e está sangrando muito"
+    expect: {handoff: true, llm_called: false, reply_contains: ["192"]}
