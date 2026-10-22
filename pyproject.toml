@@ -1,0 +1,96 @@
+[project]
+name = "clinic-manager"
+version = "0.1.0"
+description = "Assistente de agendamento via WhatsApp para consultório odontológico."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = [
+    "anyio>=4.6",
+    "fastapi>=0.115",
+    "httpx>=0.28",
+    "pydantic>=2.10",
+    "pydantic-ai-slim[anthropic,google,openai]>=1.0",
+    "pydantic-settings>=2.6",
+    "pyyaml>=6.0",
+    "uvicorn>=0.32",
+]
+
+[project.optional-dependencies]
+# Install only the adapters you actually use, e.g. `uv sync --extra google --extra firestore`.
+google = ["google-auth>=2.35", "requests>=2.32"]
+microsoft = []  # Microsoft Graph is called with httpx directly; no extra SDK needed.
+caldav = ["caldav>=1.4", "icalendar>=6.0"]
+firestore = ["google-cloud-firestore>=2.19"]
+all = ["clinic-manager[google,caldav,firestore]"]
+
+[project.scripts]
+clinic = "app.cli:main"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.13",
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.8",
+    "types-pyyaml>=6.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.uv]
+default-groups = ["dev"]
+
+# --------------------------------------------------------------------------- ruff
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["app", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # bugbear
+    "SIM", # simplify
+    "DTZ", # no naive datetimes (timezone is mandatory in this project)
+    "ASYNC",
+    "RUF",
+]
+ignore = [
+    "RUF001", # PT-BR strings legitimately contain ambiguous-looking unicode
+    "RUF002",
+    "RUF003",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["DTZ001"]  # tests build aware datetimes via helpers; allow explicit tzinfo= literals
+
+# --------------------------------------------------------------------------- mypy
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+plugins = ["pydantic.mypy"]
+files = ["app"]
+
+[[tool.mypy.overrides]]
+module = ["caldav.*", "icalendar.*", "google.*"]
+ignore_missing_imports = true
+
+# --------------------------------------------------------------------------- pytest
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "integration: hits a real external service; needs credentials in env (skipped by default)",
+]
+addopts = "-m 'not integration'"
