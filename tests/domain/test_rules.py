@@ -63,3 +63,13 @@ def test_phone_helpers() -> None:
     assert mask_phone("5581999990000") == "5581*****0000"
     with pytest.raises(ValueError):
         normalize_phone("123")
+
+
+def test_brazilian_phone_variants() -> None:
+    from app.domain.models import phone_variants, same_phone
+
+    assert phone_variants("5581988887777") == ["5581988887777", "558188887777"]
+    assert phone_variants("558188887777") == ["558188887777", "5581988887777"]
+    assert same_phone("558188887777", "5581988887777")
+    assert not same_phone("5581988887777", "5581988887778")
+    assert phone_variants("14155550100") == ["14155550100"]

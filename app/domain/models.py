@@ -21,6 +21,20 @@ def normalize_phone(raw: str) -> str:
     return digits
 
 
+def phone_variants(phone: str) -> list[str]:
+    """Brazilian mobiles may appear with or without the extra '9' (WhatsApp wa_id often omits it)."""
+    variants = [phone]
+    if phone.startswith("55") and len(phone) == 13 and phone[4] == "9":
+        variants.append(phone[:4] + phone[5:])
+    elif phone.startswith("55") and len(phone) == 12 and phone[4] in "6789":
+        variants.append(phone[:4] + "9" + phone[4:])
+    return variants
+
+
+def same_phone(a: str, b: str) -> bool:
+    return bool(set(phone_variants(a)) & set(phone_variants(b)))
+
+
 def mask_phone(phone: str) -> str:
     """Phone safe for logs: ``5581*****0000``."""
     if len(phone) <= 8:
@@ -84,6 +98,7 @@ class Patient(_Model):
     opted_out: bool = False
     """Patient sent "SAIR": no recall/follow-up/marketing-like messages."""
     created_at: AwareDatetime
+    last_recall_at: AwareDatetime | None = None
 
 
 class AppointmentStatus(StrEnum):
@@ -166,14 +181,25 @@ class ChatMessage(_Model):
     at: AwareDatetime
 
 
+class OfferedSlot(_Model):
+    """A slot shown to the patient under a short id (``H1``…). Write tools accept only these ids."""
+
+    slot: Slot
+    procedure_id: str
+
+
+MAX_OFFERED_SLOTS = 24
+
+
 class Conversation(_Model):
     phone: str
     state: ConversationState = ConversationState.BOT
     turn: int = 0
     """Incremented on every inbound patient message."""
     messages: list[ChatMessage] = Field(default_factory=list)
-    offered_slots: dict[str, Slot] = Field(default_factory=dict)
-    offered_procedure_id: str | None = None
+    offered_slots: dict[str, OfferedSlot] = Field(default_factory=dict)
+    slot_counter: int = 0
+    """Slot ids keep increasing within a conversation, so an old id never points to a different time."""
     pending_action: PendingAction | None = None
     handoff_reason: str | None = None
     last_inbound_at: AwareDatetime | None = None
@@ -184,6 +210,14 @@ class Conversation(_Model):
     def add_message(self, role: Literal["patient", "bot", "dentist", "system"], text: str, at: datetime) -> None:
         self.messages.append(ChatMessage(role=role, text=text, at=at))
         self.updated_at = at
+
+    def offer(self, slot: Slot, procedure_id: str) -> str:
+        self.slot_counter += 1
+        slot_id = f"H{self.slot_counter}"
+        self.offered_slots[slot_id] = OfferedSlot(slot=slot, procedure_id=procedure_id)
+        while len(self.offered_slots) > MAX_OFFERED_SLOTS:
+            self.offered_slots.pop(next(iter(self.offered_slots)))
+        return slot_id
 
     def trim(self, max_messages: int) -> None:
         if len(self.messages) > max_messages:
