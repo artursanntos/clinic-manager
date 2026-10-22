@@ -6,6 +6,7 @@ unused provider's extra doesn't need to be installed.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -22,7 +23,7 @@ from app.capabilities import build_capabilities
 from app.config import Settings
 from app.domain.rules import ClinicRules, load_rules
 from app.harness.approvals import ApprovalService
-from app.harness.capability import BaseCapability, JobHandler
+from app.harness.capability import BaseCapability, JobHandler, JobResult
 from app.harness.context import Services
 from app.harness.events import EventBus
 from app.harness.notify import Notifier
@@ -126,6 +127,27 @@ def build_messaging(settings: Settings) -> MessagingChannel:
 # --------------------------------------------------------------------------- container
 
 
+def _daily(jobs: Mapping[str, JobHandler]) -> JobHandler:
+    """One Cloud Scheduler job for everything (free tier covers 3 jobs per billing account)."""
+
+    async def run(services: Services) -> JobResult:
+        total = JobResult(name="daily")
+        for handler in jobs.values():
+            try:
+                result = await handler(services)
+            except Exception:
+                logging.getLogger(__name__).exception("job failed inside daily run")
+                total.errors += 1
+                continue
+            total.processed += result.processed
+            total.sent += result.sent
+            total.skipped += result.skipped
+            total.errors += result.errors
+        return total
+
+    return run
+
+
 @dataclass
 class Container:
     settings: Settings
@@ -195,6 +217,8 @@ def build_container(
             if name in jobs:
                 raise ConfigurationError(f"duplicate job name: {name}")
             jobs[name] = handler
+
+    jobs["daily"] = _daily(dict(jobs))
 
     return Container(
         settings=settings,

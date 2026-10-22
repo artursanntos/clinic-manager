@@ -41,7 +41,7 @@ def test_unknown_capability_in_config_fails() -> None:
 
 def test_all_jobs_are_registered(make_harness: HarnessFactory) -> None:
     h = make_harness(ScriptModel().model)
-    assert set(h.container.jobs) == {"reminders", "cleanup", "recall", "followup"}
+    assert set(h.container.jobs) == {"reminders", "cleanup", "recall", "followup", "daily"}
 
 
 # --------------------------------------------------------------------------- reminders
@@ -208,3 +208,11 @@ async def test_no_followup_or_recall_if_unused_delay(make_harness: HarnessFactor
     h = make_harness(ScriptModel().model, now=mon(9) + timedelta(days=5))
     await h.storage.appointments.save(appt())
     assert (await h.container.jobs["followup"](h.services)).sent == 0  # older than max_delay (48h)
+
+
+async def test_daily_runs_every_job(make_harness: HarnessFactory) -> None:
+    h = make_harness(ScriptModel().model, now=at(2026, 10, 25, 9))
+    await h.storage.appointments.save(appt())
+    result = await h.container.jobs["daily"](h.services)
+    assert result.name == "daily" and result.sent == 1  # the reminder for Monday
+    assert len(templates_to(h, PATIENT, "lembrete_consulta")) == 1

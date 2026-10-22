@@ -57,7 +57,8 @@ Orchestrator (determinístico, por mensagem):
         cada tool passa pelo PolicyEnforcer: Allow | Deny | RequireApproval
   → envia resposta → salva estado → publica DomainEvents → capabilities.on_event
 
-Cloud Scheduler → POST /jobs/{name} (reminders, recall, followup, cleanup) com bearer JOBS_TOKEN
+Cloud Scheduler → POST /jobs/daily (roda reminders, recall, followup, cleanup) com bearer JOBS_TOKEN
+                (cada job também existe isolado em /jobs/{name}; um único job no Scheduler cabe no free tier)
 ```
 
 ```
@@ -124,6 +125,7 @@ uv run mypy
 uv run clinic chat                   # conversa no terminal com fakes (precisa de AGENT_MODEL + chave)
 uv run clinic chat --model test      # roteiro determinístico, sem LLM
 uv run clinic eval --model openrouter:<modelo>   # mede a taxa de acerto dos cenários
+uv run clinic job daily              # roda os jobs localmente com fakes
 uv run uvicorn app.main:create_app --factory --reload
 ```
 
@@ -135,6 +137,13 @@ uv run uvicorn app.main:create_app --factory --reload
 - Commits em Conventional Commits (ver `CONTRIBUTING.md`).
 - Decisão de arquitetura nova → ADR em `docs/adr/` e atualização deste arquivo.
 - Regras específicas por pasta ficam em `.claude/rules/`.
+
+### Próximos passos (não feitos ainda)
+- Testar Google/Microsoft/CalDAV com contas reais (`uv run pytest -m integration`) e o Firestore no emulador.
+- Valores reais da dentista em `config/clinic.yaml`; templates aprovados na Meta.
+- Escolher o modelo de produção com `clinic eval` (pago, sem treino com dados).
+- Aviso de privacidade (LGPD) na primeira mensagem ao paciente.
+- Receitas: só depois de a dentista escolher a plataforma (ADR 0006).
 
 ### Checklists de extensão
 - **Novo provedor de agenda:** implementar `CalendarProvider` em `app/adapters/calendar/<nome>.py`, registrar em
