@@ -1,0 +1,52 @@
+# Templates do WhatsApp (Cloud API). Fora da janela de 24h só é possível enviar templates APROVADOS pela Meta.
+#
+# Para cada template abaixo: crie no WhatsApp Manager com o mesmo `name`, idioma pt_BR, categoria indicada,
+# o texto de `body` trocando {param} por {{1}}, {{2}}… na ordem de `params`, e botões de resposta rápida
+# na ordem de `buttons` (o payload enviado é PREFIXO:<referência>).
+
+language: pt_BR
+
+templates:
+  appointment_reminder:
+    name: lembrete_consulta
+    category: UTILITY
+    params: [patient_name, procedure, when]
+    body: "Olá, {patient_name}! Lembrete da sua consulta de {procedure} {when}. Você confirma presença?"
+    buttons: [CONFIRM, RESCHEDULE]   # "Confirmar" / "Preciso remarcar"
+
+  handoff_alert:
+    name: alerta_atendimento
+    category: UTILITY
+    params: [patient, reason]
+    body: "Paciente {patient} precisa de atendimento humano. Motivo: {reason}. Responda com #msg <telefone> <texto> e libere o bot com #bot <telefone>."
+
+  approval_request:
+    name: pedido_aprovacao
+    category: UTILITY
+    params: [code, patient, summary, reason]
+    body: "Pedido #{code} de {patient}: {summary}. Motivo da aprovação: {reason}. Responda #ok {code} ou #nao {code}."
+    buttons: [APPROVE, DENY]
+
+  patient_update:
+    name: atualizacao_consulta
+    category: UTILITY
+    params: [message]
+    body: "Atualização sobre sua consulta: {message}"
+
+  waitlist_offer:
+    name: vaga_disponivel
+    category: UTILITY
+    params: [patient_name, procedure, when]
+    body: "Olá, {patient_name}! Abriu uma vaga para {procedure} {when}. Se quiser, responda esta mensagem que eu verifico para você."
+
+  recall_checkup:
+    name: lembrete_retorno
+    category: MARKETING
+    params: [patient_name]
+    body: "Olá, {patient_name}! Já faz um tempo desde sua última visita. Que tal agendar sua revisão? Responda esta mensagem para ver horários. Para não receber mais, envie SAIR."
+
+  post_visit_followup:
+    name: pos_consulta
+    category: MARKETING
+    params: [patient_name, review_url]
+    body: "Olá, {patient_name}! Obrigada pela visita. Se puder, conte como foi sua experiência: {review_url}. Para não receber mais mensagens assim, envie SAIR."

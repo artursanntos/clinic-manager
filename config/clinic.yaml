@@ -1,0 +1,122 @@
+# =====================================================================================================
+#  Regras da clínica — ÚNICA fonte de informação que o bot pode repetir ao paciente.
+#
+#  ⚠️  VALORES DE EXEMPLO (marcados com EXEMPLO). Substituir pelos dados reais da dentista antes de usar.
+#  Tudo que não estiver aqui o bot NÃO sabe e faz handoff para a doutora.
+# =====================================================================================================
+
+clinic:
+  name: "Consultório Odontológico EXEMPLO"
+  dentist_name: "Dra. EXEMPLO"
+  dentist_phone: "5581900000000"            # EXEMPLO — WhatsApp da dentista (recebe handoffs e aprovações)
+  address: "Rua EXEMPLO, 123, sala 45 — Boa Viagem, Recife/PE"   # EXEMPLO
+  maps_url: "https://maps.google.com/?q=EXEMPLO"                  # EXEMPLO
+  payment_methods: ["Pix", "Cartão de débito", "Cartão de crédito (até 3x)"]   # EXEMPLO
+  extra_info:
+    estacionamento: "Há estacionamento rotativo em frente ao prédio."           # EXEMPLO
+    acessibilidade: "O prédio tem elevador e rampa de acesso."                  # EXEMPLO
+    atraso: "Toleramos até 15 minutos de atraso. Depois disso, pode ser preciso remarcar."   # EXEMPLO
+
+timezone: America/Recife
+
+scheduling:
+  slot_step_minutes: 30        # grade de horários
+  buffer_minutes: 10           # folga antes/depois de cada compromisso (limpeza da sala)
+  min_lead_minutes: 120        # antecedência mínima para marcar
+  max_lead_days: 60            # antecedência máxima
+  max_options: 6               # quantos horários oferecer por vez
+  max_options_per_day: 3       # espalhados ao longo do dia
+  fill_gaps: true              # também oferece horários logo após um compromisso (encaixe natural)
+
+# Horário de atendimento (o intervalo entre faixas é o almoço). EXEMPLO
+working_hours:
+  monday:    [{start: "08:00", end: "12:00"}, {start: "13:30", end: "18:00"}]
+  tuesday:   [{start: "08:00", end: "12:00"}, {start: "13:30", end: "18:00"}]
+  wednesday: [{start: "08:00", end: "12:00"}, {start: "13:30", end: "18:00"}]
+  thursday:  [{start: "08:00", end: "12:00"}, {start: "13:30", end: "18:00"}]
+  friday:    [{start: "08:00", end: "12:00"}, {start: "13:30", end: "17:00"}]
+  saturday:  [{start: "08:00", end: "12:00"}]
+  sunday:    []
+
+# Janelas de ENCAIXE: fora da grade normal, só com aprovação da dentista (ver approvals.encaixe). EXEMPLO
+encaixe_windows:
+  monday:    [{start: "12:00", end: "12:30"}, {start: "18:00", end: "18:30"}]
+  tuesday:   [{start: "12:00", end: "12:30"}, {start: "18:00", end: "18:30"}]
+  wednesday: [{start: "12:00", end: "12:30"}, {start: "18:00", end: "18:30"}]
+  thursday:  [{start: "12:00", end: "12:30"}, {start: "18:00", end: "18:30"}]
+  friday:    [{start: "12:00", end: "12:30"}]
+
+holidays:   # EXEMPLO — completar com feriados nacionais, estaduais (PE) e municipais (Recife)
+  - {date: 2026-11-02, name: "Finados"}
+  - {date: 2026-11-15, name: "Proclamação da República"}
+  - {date: 2026-11-20, name: "Consciência Negra"}
+  - {date: 2026-12-08, name: "Nossa Senhora da Conceição (Recife)"}
+  - {date: 2026-12-25, name: "Natal"}
+  - {date: 2027-01-01, name: "Confraternização Universal"}
+
+closures: []   # ex.: [{start: 2027-01-10, end: 2027-01-20, reason: "Férias da doutora"}]
+
+procedures:   # EXEMPLO — durações e preços fictícios
+  - id: avaliacao
+    name: "Avaliação"
+    duration_minutes: 30
+    price_cents: 0
+    price_note: "Gratuita na primeira visita"
+    aliases: ["consulta", "primeira consulta", "avaliacao", "check-up", "checkup", "revisão", "revisao"]
+  - id: limpeza
+    name: "Limpeza (profilaxia)"
+    duration_minutes: 60
+    price_cents: 18000
+    preparation: "Escove os dentes normalmente antes de vir."
+    aliases: ["profilaxia", "limpeza", "tartaro", "tártaro"]
+  - id: restauracao
+    name: "Restauração"
+    duration_minutes: 60
+    price_note: "sob avaliação"
+    aliases: ["obturação", "obturacao", "restauração", "cárie", "carie"]
+  - id: clareamento
+    name: "Clareamento (consulta inicial)"
+    duration_minutes: 60
+    price_note: "sob avaliação"
+    aliases: ["clareamento", "branqueamento"]
+  - id: canal
+    name: "Tratamento de canal"
+    duration_minutes: 90
+    price_note: "sob avaliação"
+    bookable_by_bot: false          # precisa de avaliação prévia → handoff
+    aliases: ["canal", "endodontia"]
+
+insurance:   # EXEMPLO
+  accepted: ["EXEMPLO Odonto", "Plano EXEMPLO Dental"]
+  notes: "Para convênios, traga a carteirinha e um documento com foto."
+
+cancellation_policy:
+  min_notice_hours: 24
+  text: "Pedimos que cancelamentos ou remarcações sejam feitos com pelo menos 24 horas de antecedência."
+
+approvals:
+  encaixe: true              # horários em janela de encaixe só com OK da dentista
+  late_cancellation: false   # cancelamento em cima da hora: só aplica a política e informa
+  new_patient: false         # primeira consulta de paciente novo precisa de OK?
+
+retention:
+  conversation_days: 90      # LGPD: histórico de conversa apagado após N dias sem atividade
+  max_messages: 30           # mantém só as últimas N mensagens por conversa
+  processed_message_days: 7
+
+emergency_guidance: >-
+  Se houver sangramento intenso que não para, inchaço que dificulta respirar ou engolir, febre alta ou trauma
+  no rosto, procure imediatamente um pronto-socorro ou ligue 192 (SAMU).
+
+# Capabilities opcionais (o núcleo — agendamento, informações e handoff — está sempre ativo).
+capabilities:
+  waitlist:
+    enabled: true
+    max_offers_per_slot: 3      # quantos pacientes da lista avisar quando um horário vagar
+  recall:
+    enabled: true
+    after_months: 6             # "está na hora da sua revisão"
+    procedure_ids: [limpeza, avaliacao]
+  followup:
+    enabled: true
+    review_url: "https://g.page/r/EXEMPLO/review"   # EXEMPLO — link de avaliação no Google

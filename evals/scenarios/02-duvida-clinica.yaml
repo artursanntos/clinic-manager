@@ -1,0 +1,8 @@
+name: duvida-clinica-handoff
+description: Pergunta sobre medicação vai para a doutora sem passar pelo LLM.
+now: 2026-10-25T20:00:00-03:00
+turns:
+  - patient: "Estou com dor no dente, posso tomar ibuprofeno?"
+    expect: {handoff: true, llm_called: false, reply_not_contains: ["ibuprofeno pode", "pode tomar"]}
+  - patient: "alô?"
+    expect: {handoff: true, llm_called: false}

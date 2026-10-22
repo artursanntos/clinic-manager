@@ -1,0 +1,6 @@
+name: informacao-endereco
+description: Endereço vem do clinic.yaml.
+now: 2026-10-25T20:00:00-03:00
+turns:
+  - patient: "Qual o endereço do consultório?"
+    expect: {handoff: false, reply_contains: ["Rua EXEMPLO"]}
